@@ -1,0 +1,115 @@
+1 目录生成插件选择
+
+
+Jekyll官网上的plugins目录下便列出了很多有用的插件，其中关于目录生成的jekyll-toc-generator便是官方推荐的。但对于在Github上建站的同学应该知道，Github禁止了很多plugins的自动build，尽管也正在增加一些插件白名单，但貌似这个插件是不能通过源码提交给Github pages自动build的。因此对于不想通过设定.nojekyll 本地build，然后push整个静态代码到Github上的同学，可能一些纯javascript的插件便是首选。
+
+1-a 纯JS版本
+
+本文所用的便是纯javascript版的toc插件jekyll-table-of-contents. 其README也很详细，照着一步步配即可。
+
+* 在待添加插件的模板中首先加入jquery.js的依赖，然后是把该toc.js放在其后。
+
+在需要显示目录结构的地方加上如下div。
+
+把toc.js调用函数放在最后（如之前）即可。
+
+$(document).ready(function(){$('#toc').toc();});
+
+2 Markdown实现版本
+
+
+Toc插件生成目录的原理便是借助markdown为每个header生成一个唯一的id，然后Toc便会寻找这样的header id逐一的构造相应的锚链接，并显示即可。
+
+常见的Markdown实现如rdiscount,kramdown,redcarpet。不同的版本，需要在_config.yml文件中进行相应的配置。如对于rdiscount，配置如下：
+
+markdown: rdiscount
+
+rdiscount:
+
+          extensions:
+
+                 - generate_toc
+
+值得说明的是，我发现rdiscount对每个header会生成相同的id,便导致了Toc插件生成的所有目录都被定向到同一个锚链接。在网上收了下有一些issues谈到这方面的问题，如：
+
+1.https://github.com/jekyll/jekyll/issues/110
+
+2.https://github.com/jekyll/jekyll/issues/471
+
+3.https://github.com/ghiculescu/jekyll-table-of-contents/issues/16
+
+所以如果有同学遇到类似的情况，可以用其他的markdown版本，如redcarpet.
+
+对于redcarpet,配置如下：
+
+markdown: redcarpet
+
+redcarpet:
+
+       extensions: [with_toc_data]
+
+用redcarpet时同样值得注意的是，对于使用串来做摘要分割符的会发现redcarpet并不能根据其来准确的截取相应的摘要串。原因便是redcarpet会对一些字符如<,>进行转义，变成相应的<,>。
+
+2-a 锚链接缩进问题
+
+当你为网页设置了一个固定位置的导航栏（具有确定的高度），然后你为其他页面内容生成了锚链接（如本文提到的目录结构）。当你点击锚链接时，页面会跳转到相应的锚链接位置，且该锚链接的起始点会缩进到最上方，而部分被导航栏遮住。如下表左表所示：
+
+点击：http://foo.com/#bar
+
+错误 (but the common behavior):        正确:
+
++---------------------------------+      +---------------------------------+
+
+    | BAR///////////////////// header |              | //////////////////////// header |
+
++---------------------------------+      +---------------------------------+
+
+| Here is the rest of the Text    |                        | BAR                            |
+
+| ...                            |                                      |                                |
+
+| ...                            |                                        Here is the rest of the Text    |
+
+| ...                            |                                       | ...                            |
+
++---------------------------------+      +---------------------------------+
+
+而你希望的行为则是如右表所示的。对此，可以在toc脚本生成header时为其添加一个div的class,
+
+然后在css中设置起式样为：
+
+/* 具体padding高度可以根据你导航栏的高度来设定 */.anchor{padding-top:50px;}
+
+3 为目录显示添加scrollspy效果
+
+
+scrollspy效果即导航栏或目录会随着页面的滑动位置自动显示当前所在的段落所属的导航条目。其主要是基于著名的bootstrap来实现的。W3Cschool上有一个设置scrollSpy的简单教程。但其主要是针对手动设置header id的情况。针对通过toc.js自动生成header id的配置如下：
+
+添加bootstrap式样头和脚本
+
+在你想要操作的页面范围内（通常是)内设置滚动事件的响应目标（可以是id或是class，此处我们用toc表示目录），如下：
+
+设置你的toc div:
+
+/* 你的scrollSpy目录结构将要显示在这里 */
+
+在你的toc.js脚本中添加bootstrap中的｀nav nav-pills nav-stacked`类：
+
+/* 把 html = settings.title + " <" + settings.listType + ">" 变成如下 */html=settings.title+" <"+settings.listType+" class = 'nav nav-pills nav-stacked'>";
+
+So long, and Thanks for all the fish.
+
+参考
+
+
+[1].jekyll-table-of-contents.
+
+[2].positionfixed-page-header-and-anchors.
+
+[3].W3cScholl.
+
+[4].Implementing ScrollSpy
+
+文／willheng（简书作者）
+原文链接：http://www.jianshu.com/p/6c6d209aa0e3
+著作权归作者所有，转载请联系作者获得授权，并标注“简书作者”。
